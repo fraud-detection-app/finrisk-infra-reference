@@ -1,0 +1,15 @@
+# Made by terraform / tools -- never commit.
+.terraform/
+*.tfstate
+*.tfstate.*
+tfplan
+tfplan.json
+*.tfplan
+plan
+crash.log
+outputs.json
+oidc_subjects.auto.tfvars.json
+# Python
+__pycache__/
+.pytest_cache/
+.venv/
