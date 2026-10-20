@@ -107,6 +107,13 @@ resource "aws_sagemaker_domain" "studio" {
     home_efs_file_system = "Delete"
   }
 
+  # AWS answers with an empty `default_user_settings.studio_web_portal_settings {}` block that this file never sets, so
+  # without this every plan wants to "remove" it: a change that changes nothing, and a nightly drift failure (seen on the
+  # first live plan after the domain was created, 20 Oct 2026).
+  lifecycle {
+    ignore_changes = [default_user_settings[0].studio_web_portal_settings]
+  }
+
   depends_on = [aws_iam_role_policy.studio]
 }
 

@@ -220,9 +220,12 @@ resource "aws_iam_role_policy" "sagemaker_exec" {
       },
       {
         # 8. Register a version in the ONE model group (it starts PendingManualApproval; approving is another role's job).
+        #    CreateModelPackageGroup: the pipeline's RegisterModel step calls it first, every time, even though Terraform made
+        #    the group (it treats "already exists" as fine). Without it the first live Register step was refused
+        #    (20 Oct 2026). Scoped to this one group's ARN, so it can only "create" the group that already exists.
         Sid    = "RegisterAndReadModelVersions"
         Effect = "Allow"
-        Action = ["sagemaker:CreateModelPackage", "sagemaker:DescribeModelPackage", "sagemaker:ListModelPackages", "sagemaker:DescribeModelPackageGroup", "sagemaker:AddTags"]
+        Action = ["sagemaker:CreateModelPackageGroup", "sagemaker:CreateModelPackage", "sagemaker:DescribeModelPackage", "sagemaker:ListModelPackages", "sagemaker:DescribeModelPackageGroup", "sagemaker:AddTags"]
         Resource = [
           aws_sagemaker_model_package_group.model.arn,
           "${local.arn_sm}:model-package/${aws_sagemaker_model_package_group.model.model_package_group_name}/*",
