@@ -191,6 +191,17 @@ locals {
         ]
       },
       {
+        # After a deploy, promote deletes this environment's configs and models older than the two newest (the rollback
+        # target stays). It FINDS them with ListEndpointConfigs / ListModels, which AWS does not let a policy limit to named
+        # resources (Resource must be "*"); they only list names. The deletes stay limited to finrisk-<env>-fraud-* above.
+        # The first live promote was refused here, after the endpoint, the smoke test and the pointer had succeeded
+        # (21 Oct 2026).
+        Sid      = "FindThisEnvironmentsOldConfigsAndModels"
+        Effect   = "Allow"
+        Action   = ["sagemaker:ListEndpointConfigs", "sagemaker:ListModels"]
+        Resource = "*"
+      },
+      {
         # CreateEndpoint / UpdateEndpoint name the endpoint AND the config; InvokeEndpoint is the smoke test.
         Sid    = "ManageAndSmokeTestThisEnvironmentsEndpoint"
         Effect = "Allow"
