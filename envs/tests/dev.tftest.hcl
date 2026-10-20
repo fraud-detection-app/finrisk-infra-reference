@@ -231,6 +231,15 @@ run "dev_endpoint_role_reads_the_model_and_writes_only_logs" {
   }
 }
 
+run "dev_endpoint_role_reads_no_alarms_serverless_has_no_blue_green" {
+  command = plan
+
+  assert {
+    condition     = !strcontains(aws_iam_role_policy.endpoint.policy, "cloudwatch:DescribeAlarms")
+    error_message = "dev is serverless: no blue/green, so its endpoint role reads no alarms."
+  }
+}
+
 run "dev_has_no_alarms" {
   command = plan
 

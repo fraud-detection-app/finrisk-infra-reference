@@ -83,6 +83,17 @@ resource "aws_iam_role_policy" "endpoint" {
           Action   = ["s3:PutObject"]
           Resource = "arn:aws:s3:::${local.ml_bucket}/capture/${var.env}/*"
         },
+        {
+          # The blue/green guardrail: while the new fleet takes traffic, SageMaker reads the auto-rollback alarms
+          # (finrisk-<env>-endpoint-5xx / -latency) AS THIS ROLE. Without this the read is denied, the guardrail fails closed
+          # and every update rolls back, although both alarms are OK: the first live blue/green (21 Oct 2026, CloudTrail:
+          # "finrisk-pre-prod-endpoint/SageMaker is not authorized to perform: cloudwatch:DescribeAlarms on resource: null").
+          # Resource "*": AWS evaluated the call without an alarm ARN, so a name-scoped grant would not match. Read-only.
+          Sid      = "ReadTheRollbackAlarms"
+          Effect   = "Allow"
+          Action   = ["cloudwatch:DescribeAlarms"]
+          Resource = "*"
+        },
       ] : [],
     )
   })

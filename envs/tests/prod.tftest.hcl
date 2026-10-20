@@ -128,6 +128,15 @@ run "prod_endpoint_role_writes_capture_prod_only" {
     )
     error_message = "The prod endpoint writes capture/prod/* and its own log group, and knows no other environment."
   }
+
+  # The blue/green guardrail reads the rollback alarms AS THE ENDPOINT ROLE; denied = every update rolls back (21 Oct 2026).
+  assert {
+    condition = (
+      [for s in jsondecode(aws_iam_role_policy.endpoint.policy).Statement : s.Action if s.Sid == "ReadTheRollbackAlarms"][0] == ["cloudwatch:DescribeAlarms"] &&
+      [for s in jsondecode(aws_iam_role_policy.endpoint.policy).Statement : s.Resource if s.Sid == "ReadTheRollbackAlarms"][0] == "*"
+    )
+    error_message = "The prod endpoint role must be able to read the rollback alarms (cloudwatch:DescribeAlarms, read-only)."
+  }
 }
 
 run "prod_has_the_guardrails_and_the_three_model_alarms_exactly_as_designed" {
