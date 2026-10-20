@@ -153,6 +153,10 @@ itself: only code on `main`, through an Environment with a reviewer where it mat
 `ecr:SetRepositoryPolicy` / `DeleteRepositoryPolicy` belong to `finrisk-infra-apply-shared` alone (on the two repositories); the app deploy
 roles can only *read* the repository policy, which is why `shared/ecr.tf` writes Lambda's pull statement for them.
 `iam:CreateServiceLinkedRole` is deliberately **not** granted anywhere.
+`finrisk-sagemaker-exec` may create, describe, stop and tag processing, training and tuning jobs of **any** name in the account
+and Region: SageMaker Pipelines names the jobs it starts itself (`pipelines-<execution id>-BuildDataset-<random>`), so a
+`finrisk-*` rule refused the very first live pipeline run (20 Oct 2026). Only SageMaker can assume that role, and only
+`finrisk-ml-train` may start the two pipelines.
 
 ## Secrets, variables and required checks (set by `scripts/github_bootstrap.sh`)
 

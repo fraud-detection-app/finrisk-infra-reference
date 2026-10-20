@@ -197,8 +197,14 @@ resource "aws_iam_role_policy" "sagemaker_exec" {
         Condition = { StringEquals = { "cloudwatch:namespace" = ["/aws/sagemaker/TrainingJobs", "/aws/sagemaker/ProcessingJobs", "FinRisk/Model"] } }
       },
       {
-        # 7. The pipelines' steps: Processing jobs, the tuning job and the training jobs it starts, all named finrisk-*.
-        Sid    = "RunJobsNamedFinrisk"
+        # 7. The pipelines' steps: Processing jobs, the tuning job and the training jobs it starts.
+        #    BROAD ON PURPOSE (job/*): SageMaker Pipelines names the jobs it creates itself
+        #    (processing-job/pipelines-<execution id>-BuildDataset-<random>; the tuning job and its trials get generated names
+        #    too), so no name prefix can be written here. The first live run (20 Oct 2026) failed on exactly this: AddTags on
+        #    processing-job/pipelines-... was denied while the policy said finrisk-*. The guards are elsewhere: only SageMaker
+        #    can assume this role (trust policy), only finrisk-ml's train role may start the two pipelines, and these actions
+        #    only run, describe, stop and tag jobs -- they cannot read any data this role is not already given above.
+        Sid    = "RunTheJobsThePipelinesStart"
         Effect = "Allow"
         Action = [
           "sagemaker:CreateProcessingJob", "sagemaker:DescribeProcessingJob", "sagemaker:StopProcessingJob",
@@ -207,9 +213,9 @@ resource "aws_iam_role_policy" "sagemaker_exec" {
           "sagemaker:ListTrainingJobsForHyperParameterTuningJob", "sagemaker:AddTags", "sagemaker:ListTags",
         ]
         Resource = [
-          "${local.arn_sm}:processing-job/${var.project}-*",
-          "${local.arn_sm}:training-job/${var.project}-*",
-          "${local.arn_sm}:hyper-parameter-tuning-job/${var.project}-*",
+          "${local.arn_sm}:processing-job/*",
+          "${local.arn_sm}:training-job/*",
+          "${local.arn_sm}:hyper-parameter-tuning-job/*",
         ]
       },
       {

@@ -254,18 +254,20 @@ run "the_sagemaker_role_is_least_privilege" {
     error_message = "PutMetricData only into /aws/sagemaker/TrainingJobs, /aws/sagemaker/ProcessingJobs and FinRisk/Model."
   }
 
-  # Jobs: named finrisk-*, three kinds.
+  # Jobs: the three kinds the pipelines start, in this account and Region only. Not name-scoped: SageMaker Pipelines
+  # names its jobs itself (pipelines-<execution id>-<step>-<random>), which a finrisk-* rule refused on the first live run.
   assert {
     condition = (
-      toset([for s in jsondecode(aws_iam_role_policy.sagemaker_exec.policy).Statement : s.Resource if s.Sid == "RunJobsNamedFinrisk"][0]) == toset([
-        "arn:aws:sagemaker:ap-southeast-2:123456789012:processing-job/finrisk-*",
-        "arn:aws:sagemaker:ap-southeast-2:123456789012:training-job/finrisk-*",
-        "arn:aws:sagemaker:ap-southeast-2:123456789012:hyper-parameter-tuning-job/finrisk-*",
+      toset([for s in jsondecode(aws_iam_role_policy.sagemaker_exec.policy).Statement : s.Resource if s.Sid == "RunTheJobsThePipelinesStart"][0]) == toset([
+        "arn:aws:sagemaker:ap-southeast-2:123456789012:processing-job/*",
+        "arn:aws:sagemaker:ap-southeast-2:123456789012:training-job/*",
+        "arn:aws:sagemaker:ap-southeast-2:123456789012:hyper-parameter-tuning-job/*",
       ]) &&
       strcontains(aws_iam_role_policy.sagemaker_exec.policy, "sagemaker:CreateHyperParameterTuningJob") &&
-      strcontains(aws_iam_role_policy.sagemaker_exec.policy, "sagemaker:StopProcessingJob")
+      strcontains(aws_iam_role_policy.sagemaker_exec.policy, "sagemaker:StopProcessingJob") &&
+      !strcontains(aws_iam_role_policy.sagemaker_exec.policy, "arn:aws:sagemaker:ap-southeast-2:123456789012:*")
     )
-    error_message = "Processing, training and tuning jobs named finrisk-* can be created, described and stopped."
+    error_message = "Processing, training and tuning jobs (any name: Pipelines chooses them) can be created, described, stopped and tagged; nothing wider."
   }
 
   # Registry: create + read in the ONE group; PassRole only itself, only to SageMaker.
