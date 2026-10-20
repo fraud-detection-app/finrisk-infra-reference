@@ -450,7 +450,7 @@ run "policies_fit_in_iam_and_nobody_gets_admin" {
     condition = alltrue([
       for name, p in aws_iam_role_policy.this : alltrue([
         for s in jsondecode(p.policy).Statement :
-        s.Resource != "*" || alltrue([for a in tolist(s.Action) : can(regex("^(ec2|elasticloadbalancing|application-autoscaling|ecs|logs|ssm):(Describe|List)|^ecr:GetAuthorizationToken$", a))])
+        s.Resource != "*" || alltrue([for a in tolist(s.Action) : can(regex("^(ec2|elasticloadbalancing|application-autoscaling|ecs|logs|ssm):(Describe|List)|^ecr:GetAuthorizationToken$|^sagemaker:List(EndpointConfigs|Models)$", a))])
       ])
     ])
     error_message = "A statement on Resource * may only list/describe (or log in to ECR)."
